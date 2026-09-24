@@ -3,6 +3,13 @@ const U=process.env.SUPABASE_URL!,K=process.env.SUPABASE_PUBLISHABLE_KEY!;
 const headers={apikey:K,Authorization:`Bearer ${K}`,"Content-Type":"application/json"};
 const base=`${U}/rest/v1`;
 
+export async function GET(req:NextRequest){
+ const {searchParams}=new URL(req.url); const sessionId=searchParams.get("sessionId"),suspectId=searchParams.get("suspectId");
+ if(!sessionId||!suspectId)return NextResponse.json({messages:[]});
+ const r=await fetch(`${base}/conversations?session_id=eq.${encodeURIComponent(sessionId)}&suspect_id=eq.${encodeURIComponent(suspectId)}&select=messages&limit=1`,{headers:{apikey:K,Authorization:`Bearer ${K}`},cache:"no-store"});
+ const row=(await r.json())[0]; return NextResponse.json({messages:Array.isArray(row?.messages)?row.messages:[]});
+}
+
 export async function POST(req:NextRequest){
  const {suspectId,question,sessionId}=await req.json();
  if(!suspectId||!question?.trim()||!sessionId)return NextResponse.json({error:"درخواست نامعتبر است."},{status:400});
