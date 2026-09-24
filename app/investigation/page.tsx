@@ -5,7 +5,7 @@ type Node={id:string;type:"suspect"|"evidence"|"timeline";title:string;sub:strin
 export default function Investigation(){
  const[data,setData]=useState<any>();const[selected,setSelected]=useState<S|null>(null);const[q,setQ]=useState("");const[m,setM]=useState<any[]>([]);const[busy,setBusy]=useState(false);const[theory,setTheory]=useState("");const[result,setResult]=useState<any>();const[tab,setTab]=useState("evidence");
  const[sessionId,setSessionId]=useState("");const[notes,setNotes]=useState("");const[pins,setPins]=useState<string[]>([]);const[links,setLinks]=useState<[string,string][]>([]);
- useEffect(()=>{let sid=localStorage.getItem("parwande-session");if(!sid){sid=crypto.randomUUID();localStorage.setItem("parwande-session",sid)}setSessionId(sid);const saved=localStorage.getItem("parwande-board");if(saved)try{const x=JSON.parse(saved);setPins(x.pins||[]);setLinks(x.links||[]);setNotes(x.notes||"")}catch{}fetch("/api/case").then(r=>r.json()).then(setData)},[]);
+ useEffect(()=>{let sid=localStorage.getItem("parwande-session");if(!sid){sid=crypto.randomUUID();localStorage.setItem("parwande-session",sid)}setSessionId(sid);const saved=localStorage.getItem("parwande-board");if(saved)try{const x=JSON.parse(saved);setPins(x.pins||[]);setLinks(x.links||[]);setNotes(x.notes||"")}catch{}const age=localStorage.getItem("parwande-age")||"";fetch("/api/case?age="+encodeURIComponent(age)).then(r=>r.json()).then(setData)},[]);
 
  useEffect(()=>{localStorage.setItem("parwande-board",JSON.stringify({pins,links,notes}))},[pins,links,notes]);
  async function loadChat(s:S){setSelected(s);setM([]);if(!sessionId)return;const r=await fetch(`/api/interrogate?sessionId=${encodeURIComponent(sessionId)}&suspectId=${s.id}`);if(r.ok){const j=await r.json();setM(j.messages||[])}}
@@ -15,7 +15,7 @@ export default function Investigation(){
  const nodes:Node[]=[...data.suspects.map((s:S)=>({id:"s:"+s.id,type:"suspect",title:s.name,sub:s.role})),...data.evidence.map((e:E)=>({id:"e:"+e.id,type:"evidence",title:e.title,sub:e.importance})),...data.timeline.map((t:T)=>({id:"t:"+t.id,type:"timeline",title:t.title,sub:t.event_time}))];
  function pin(id:string){setPins(v=>v.includes(id)?v.filter(x=>x!==id):[...v,id])}
  function connect(id:string){const last=pins[pins.length-1];if(last&&last!==id&&!links.some(([a,b])=>(a===last&&b===id)||(a===id&&b===last)))setLinks(v=>[...v,[last,id]]);if(!pins.includes(id))setPins(v=>[...v,id])}
- return <main className="investigation"><header className="topbar"><div><div className="tag">CASE FILE #001 · پرونده فعال</div><h1>{data.case.title}</h1></div><div className="status">● تحقیق در جریان</div></header>
+ return <main className="investigation"><header className="topbar"><div><div className="tag">CASE FILE · پرونده فعال</div><h1>{data.case.title}</h1></div><div className="status">● تحقیق در جریان</div></header>
  <nav className="tabs">{[["evidence","📁 مدارک"],["timeline","⏱ خط زمانی"],["board","🧩 برد کارآگاه"],["theory","🧠 نظریه من"]].map(([id,label])=><button key={id} className={tab===id?"active":""} onClick={()=>setTab(id)}>{label}</button>)}</nav>
  <div className="workspace"><aside className="panel suspects"><h2>مظنون‌ها</h2>{data.suspects.map((s:S)=><button className={"suspect "+(selected?.id===s.id?"selected":"")} key={s.id} onClick={()=>loadChat(s)}><b>{s.name}</b><small>{s.role}</small></button>)}</aside>
  <section className="center">
